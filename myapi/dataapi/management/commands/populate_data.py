@@ -6,16 +6,43 @@ from dataapi.models import DataEntry
 import random
 
 class Command(BaseCommand):
-    help = "Populate the database with fake data"
+    help = "Populate the database with fake data within Region XII (SOCCSKSARGEN)"
 
     def handle(self, *args, **kwargs):
-        fake = Faker()
-        for _ in range(100):  
+        fake = Faker('fil_PH')
+
+        region_xii = "SOCCSKSARGEN"  # Fixed Region
+
+        provinces = [
+            "Cotabato (North Cotabato)",
+            "Sarangani",
+            "South Cotabato",
+            "Sultan Kudarat",
+            "General Santos City"
+        ]
+
+        municipalities = {
+            "Cotabato (North Cotabato)": ["Kidapawan", "Midsayap", "Kabacan", "Matalam", "Makilala"],
+            "Sarangani": ["Alabel", "Glan", "Kiamba", "Malungon"],
+            "South Cotabato": ["Koronadal", "Polomolok", "Tupi", "Tampakan"],
+            "Sultan Kudarat": ["Isulan", "Tacurong", "Lambayong", "Esperanza"],
+            "General Santos City": ["General Santos City"]  # No municipalities, just the city itself
+        }
+
+        barangays = [
+            "Poblacion", "San Isidro", "San Roque", "Fatima",
+            "Lagao", "Apopong", "Katangawan", "Baluan"
+        ]
+
+        for _ in range(1000):
+            province = random.choice(provinces)
+            municipality = random.choice(municipalities[province])
+
             DataEntry.objects.create(
-                REGION=fake.state(),
-                PROVINCE=fake.city(),
-                MUNICIPALITY=fake.city(),
-                BARANGAY=fake.street_name(),
+                REGION=region_xii,
+                PROVINCE=province,
+                MUNICIPALITY=municipality,
+                BARANGAY=random.choice(barangays),
                 HH_ID=fake.uuid4(),
                 ENTRY_ID=fake.uuid4(),
                 FIRST_NAME=fake.first_name(),
@@ -34,4 +61,5 @@ class Command(BaseCommand):
                 SOLOPARENT=random.choice([True, False]),
                 IPAFFILIATION=fake.word() if random.choice([True, False]) else None,
             )
-        self.stdout.write(self.style.SUCCESS("Database populated!"))
+
+        self.stdout.write(self.style.SUCCESS("Database populated with localized data for Region XII!"))

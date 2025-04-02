@@ -14,15 +14,34 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import DataEntry
 from .serializers import DataEntrySerializer
+import pandas as pd
 
 # ✅ Public API: No Token Required
 class SummaryDataView(APIView):
     permission_classes = [AllowAny]  # Open to everyone
 
     def get(self, request):
-        data = DataEntry.objects.all()[:10]  # Limit data to 10 entries
-        serializer = DataEntrySerializer(data, many=True)
-        return Response(serializer.data)
+        # data = DataEntry.objects.all()[:10]  # Limit data to 10 entries
+        # serializer = DataEntrySerializer(data, many=True)
+        # return Response(serializer.data)
+        data = DataEntry.objects.values('REGION', 'PROVINCE', 'MUNICIPALITY', 'BARANGAY', 'SEX', 'HH_ID')
+        
+        # Convert QuerySet to Pandas DataFrame
+        df = pd.DataFrame(list(data))
+
+        # Generate pivot table
+        pivot_table = df.pivot_table(index=['REGION', 'PROVINCE'],
+                                     columns=['SEX'],
+                                     values='HH_ID',
+                                     aggfunc='count',
+                                     fill_value=0)  # Replace NaN with 0
+        
+        # Reset index to convert MultiIndex to columns
+        pivot_table.reset_index(inplace=True)
+
+        # Convert DataFrame to JSON and return response
+        return Response(pivot_table.to_dict(orient="records"))
+
 
 # ✅ Restricted API: Only accessible from allowed origins
 class SensitiveDataView(APIView):
